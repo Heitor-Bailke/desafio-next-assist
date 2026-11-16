@@ -69,6 +69,10 @@ export class LegacyTicketingAdapter {
     return this.request(() => this.service.getMyTicket(requesterId, ticketNumber));
   }
 
+  public findOpenDuplicate(requesterId: string, draft: TicketDraft): Promise<TicketRecord | null> {
+    return this.request(() => this.service.findOpenDuplicate(requesterId, draft));
+  }
+
   public createTicket(requesterId: string, draft: TicketDraft, now?: Date): Promise<TicketRecord> {
     return this.request(() => this.service.createTicket(requesterId, draft, now));
   }
