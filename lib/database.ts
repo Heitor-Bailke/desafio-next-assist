@@ -2,14 +2,9 @@ import Database from "better-sqlite3";
 import fs from "node:fs";
 import path from "node:path";
 
-const databasePath = process.env.DATABASE_PATH ?? "./data/nexo-assist.db";
-const absoluteDatabasePath = path.resolve(databasePath);
-fs.mkdirSync(path.dirname(absoluteDatabasePath), { recursive: true });
-
-export const database = new Database(absoluteDatabasePath);
-database.pragma("journal_mode = WAL");
-
-database.exec(`
+export const initializeDatabase = (database: Database.Database): void => {
+  database.pragma("foreign_keys = ON");
+  database.exec(`
   CREATE TABLE IF NOT EXISTS users (
     id TEXT PRIMARY KEY,
     email TEXT NOT NULL UNIQUE,
@@ -87,4 +82,17 @@ database.exec(`
     expires_at TEXT NOT NULL,
     created_at TEXT NOT NULL
   );
-`);
+  `);
+};
+
+export const createDatabase = (filename: string): Database.Database => {
+  const instance = new Database(filename);
+  initializeDatabase(instance);
+  return instance;
+};
+
+const databasePath = process.env.DATABASE_PATH ?? "./data/nexo-assist.db";
+const absoluteDatabasePath = path.resolve(databasePath);
+fs.mkdirSync(path.dirname(absoluteDatabasePath), { recursive: true });
+
+export const database = createDatabase(absoluteDatabasePath);
