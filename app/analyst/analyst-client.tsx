@@ -11,7 +11,22 @@ type Detail = { conversation: Conversation; messages: Message[]; tickets: Ticket
 export default function AnalystClient() {
   const router = useRouter(); const [conversations, setConversations] = useState<Conversation[]>([]); const [selected, setSelected] = useState<Detail | null>(null); const [filter, setFilter] = useState("all"); const [reply, setReply] = useState(""); const [error, setError] = useState<string | null>(null); const [loading, setLoading] = useState(true);
   const loadList = async () => { const response = await fetch("/api/analyst"); if (response.status === 401) { router.push("/login"); return; } const data = await response.json(); setConversations(data.conversations ?? []); setLoading(false); };
-  useEffect(() => { void loadList(); }, []);
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/analyst").then(async (response) => {
+      if (response.status === 401) { router.push("/login"); return null; }
+      return response.json();
+    }).then((data) => {
+      if (cancelled || !data) return;
+      setConversations(data.conversations ?? []);
+      setLoading(false);
+    }).catch(() => {
+      if (cancelled) return;
+      setError("Não foi possível carregar a fila.");
+      setLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [router]);
   const loadDetail = async (id: string) => { const response = await fetch(`/api/analyst?conversationId=${id}`); const data = await response.json(); setSelected(data); };
   const action = async (name: "take" | "return" | "close" | "reply") => { if (!selected) return; setError(null); const response = await fetch("/api/analyst", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ conversationId: selected.conversation.id, action: name, content: name === "reply" ? reply : undefined }) }); const data = await response.json(); if (!response.ok) { setError(data.error ?? "Não foi possível executar."); return; } setSelected(data); setReply(""); await loadList(); };
   if (loading) return <div className="shell"><div className="main-grid"><p className="muted">Carregando fila...</p></div></div>;

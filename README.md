@@ -1,36 +1,83 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Nexo Assist
 
-## Getting Started
+Aplicação demonstrativa de service desk de TI. Funcionários conversam com um agente Mastra para consultar a central de ajuda e administrar chamados; analistas acompanham conversas transferidas em um console próprio.
 
-First, run the development server:
+## Requisitos
+
+- Node.js compatível com Next.js 16
+- npm
+- Chave da API da OpenAI para respostas do agente
+
+## Configuração
+
+1. Instale as dependências:
+
+   ```bash
+   npm install
+   ```
+
+2. Copie `.env.example` para `.env.local` e configure:
+
+   ```dotenv
+   DATABASE_PATH=./data/nexo-assist.db
+   OPENAI_API_KEY=sua-chave
+   LLM_MODEL=openai/gpt-4o-mini
+   ```
+
+   `DATABASE_PATH` pode apontar para outro arquivo SQLite. A pasta do banco é criada automaticamente.
+
+3. Crie o banco e carregue dados demonstrativos:
+
+   ```bash
+   npm run db:seed
+   ```
+
+   O seed é repetível e insere usuários, artigos e chamados de exemplo sem duplicar registros.
+
+4. Inicie a aplicação:
+
+   ```bash
+   npm run dev
+   ```
+
+   Abra <http://localhost:3000>.
+
+## Acesso demonstrativo
+
+O seed cria estes usuários. O login de demonstração valida o e-mail existente e exige uma senha não vazia; não há validação real de senha.
+
+| Perfil | E-mail |
+| --- | --- |
+| Funcionária | `ana.silva@nexo.com` |
+| Funcionário | `bruno.costa@nexo.com` |
+| Funcionária | `carla.souza@nexo.com` |
+| Analista | `marina.alves@nexo.com` |
+
+## Funcionalidades
+
+- Login demonstrativo com sessão em cookie HTTP-only e expiração em oito horas.
+- Chat do funcionário com histórico, respostas em streaming NDJSON e exibição do trace de decisão.
+- Agente com busca na central de ajuda, consulta, criação, atualização e reabertura de chamados; verificação de duplicidade e transferência para analista.
+- Chamados restritos ao funcionário autenticado, com prioridades, estados e prazos calculados em horas úteis.
+- Console do analista para listar e assumir conversas, responder, devolver ao agente ou encerrar.
+- Persistência SQLite para usuários, sessões, conversas, mensagens, traces, chamadas de ferramentas, chamados e artigos.
+
+## Regras e limitações
+
+- Horário útil implementado: segunda a sexta, das 08:00 às 18:00 UTC; feriados não são considerados.
+- Prioridades definem o prazo inicial e o intervalo para próxima atualização: crítica 1 hora, alta 4 horas, média 3 dias úteis e baixa 5 dias úteis.
+- Chamados resolvidos podem ser reabertos por até sete dias.
+- Cada conversa aceita até 30 mensagens.
+- O classificador de escopo usa termos definidos no código e é demonstrativo; não substitui uma política de produção.
+- O login não autentica a senha e o projeto não inclui implantação externa.
+
+## Validação
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run typecheck
+npm run lint
+npm test
+npm run build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Os testes cobrem serviços de chamados, regras de horário útil, transições de conversa, traces do agente e avaliações simples de classificação.
