@@ -62,6 +62,16 @@ O seed cria estes usuários. O login de demonstração valida o e-mail existente
 - Console do analista para listar e assumir conversas, responder, devolver ao agente ou encerrar.
 - Persistência SQLite para usuários, sessões, conversas, mensagens, traces, chamadas de ferramentas, chamados e artigos.
 
+## Etapas implementadas
+
+1. **Setup, persistência e dados de exemplo:** configuração do Next.js, banco SQLite, esquema de dados e seed repetível com usuários, artigos e chamados demonstrativos.
+2. **Serviço de chamados e testes:** operações de consulta, criação, atualização e reabertura; validação de propriedade, duplicidade, prioridade e prazos em horas úteis.
+3. **Agent Mastra, tools e traces:** agente de TI, ferramentas para central de ajuda e chamados, transferência para analista e persistência das decisões e chamadas de ferramentas.
+4. **Chat e login:** sessão demonstrativa, chat do funcionário com histórico, streaming NDJSON, cards de chamados e trace de decisão.
+5. **Console do analista:** fila de conversas, visualização de histórico e chamados, assumir, responder, devolver ao agente e encerrar atendimento.
+6. **Testes automatizados e evals:** 15 testes para serviços de chamados, regras de prazo, estados da conversa, ferramentas/agente e classificação de escopo; não há teste e2e de browser.
+7. **README final:** instruções de instalação e execução, configuração, perfis de demonstração, funcionalidades e limitações conhecidas.
+
 ## Regras e limitações
 
 - Horário útil implementado: segunda a sexta, das 08:00 às 18:00 UTC; feriados não são considerados.
