@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getUserFromRequest } from "../../../lib/auth";
 import { database } from "../../../lib/database";
+import { transitionConversation } from "../../../lib/conversations";
 
 const actionSchema = z.object({
   conversationId: z.string().min(1),
@@ -50,6 +51,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     const input = actionSchema.parse(await request.json());
     const current = database.prepare("SELECT status FROM conversations WHERE id = ?").get(input.conversationId) as { status: string } | undefined;
     if (!current) return NextResponse.json({ error: "Conversa não encontrada." }, { status: 404 });
+    transitionConversation(current.status as "agent" | "waiting_analyst" | "with_analyst" | "closed", input.action);
     if (input.action === "take") database.prepare("UPDATE conversations SET status = 'with_analyst', analyst_id = ?, updated_at = ? WHERE id = ?").run(analyst.id, new Date().toISOString(), input.conversationId);
     if (input.action === "return") database.prepare("UPDATE conversations SET status = 'agent', analyst_id = NULL, updated_at = ? WHERE id = ?").run(new Date().toISOString(), input.conversationId);
     if (input.action === "close") database.prepare("UPDATE conversations SET status = 'closed', updated_at = ? WHERE id = ?").run(new Date().toISOString(), input.conversationId);

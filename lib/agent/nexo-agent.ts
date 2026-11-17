@@ -2,6 +2,7 @@ import { Agent } from "@mastra/core/agent";
 import type Database from "better-sqlite3";
 import { randomUUID } from "node:crypto";
 import { createDecisionContext, persistDecisionTrace, type DecisionContext } from "./trace";
+import { classifyRequest } from "./policy";
 import { createNexoTools, type NexoToolDependencies } from "./tools";
 import type { SqliteHelpCenterService } from "../services/help-center";
 import { LegacyTicketingAdapter } from "../services/legacy-ticketing";
@@ -96,6 +97,19 @@ export const runNexoAgentTurn = async ({
   `).run(userMessageId, conversationId, content, now, userMessageNumber);
 
   const decision = createDecisionContext();
+  const policy = classifyRequest(content);
+  if (policy.intent === "fora_do_escopo") {
+    decision.intent = policy.intent;
+    decision.action = "redirecionou para o canal responsável";
+    decision.confidence = policy.confidence;
+    decision.rationale = "A mensagem não pertence ao escopo de TI.";
+    const assistantMessageId = `message-${randomUUID()}`;
+    database.prepare("INSERT INTO messages (id, conversation_id, author, content, created_at, session_message_number) VALUES (?, ?, 'agent', ?, ?, ?)").run(
+      assistantMessageId, conversationId, policy.response, new Date().toISOString(), userMessageNumber + 1,
+    );
+    persistDecisionTrace(database, assistantMessageId, decision);
+    return { assistantMessage: policy.response ?? "", messageId: assistantMessageId, decision };
+  }
   const agent = createNexoAgent({
     requesterId,
     ticketing,
